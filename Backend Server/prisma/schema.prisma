@@ -34,6 +34,7 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+// Ideal Client Profile (ICP) model
 model ICP {
   id              String   @id @default(uuid())
   userId          String   @unique
