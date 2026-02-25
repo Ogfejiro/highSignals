@@ -33,7 +33,8 @@ export default function SignupLoginScreen() {
   const handleRegister = () => {
     console.log('Register:', { fullName, email, password });
     // TODO: Connect to backend API
-    // router.push('/onboarding');
+    // After successful registration, navigate to onboarding
+    router.push('/onboarding');
   };
 
   const handleGoogleAuth = () => {

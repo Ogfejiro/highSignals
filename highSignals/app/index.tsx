@@ -96,7 +96,7 @@ export default function WelcomeScreen() {
               <Animated.View style={{ opacity: buttonAnim, width: '100%' }}>
                 <TouchableOpacity
                   style={styles.button}
-                  onPress={() => router.push('/WelcomeScreen/auth')}
+                  onPress={() => router.push('/auth')}
                   activeOpacity={0.85}
                 >
                   <Text style={styles.buttonText}>Get Started</Text>
@@ -104,7 +104,7 @@ export default function WelcomeScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() => router.push('/WelcomeScreen/auth')}
+                  onPress={() => router.push('/auth')}
                   style={styles.loginLink}
                 >
                   <Text style={styles.loginLinkText}>
