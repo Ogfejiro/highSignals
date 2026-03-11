@@ -52,6 +52,8 @@ model ICP {
   mainProblem     String
   dreamOutcome    String
   authorityStory  String
+  clientDemographics String
+  otherDetails       String?
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
