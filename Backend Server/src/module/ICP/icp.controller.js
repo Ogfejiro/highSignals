@@ -1,43 +1,42 @@
 import prisma from '../../config/db.js'
+import asyncWrapper from '../../shared/service/asyncHandler.js'
+import { createICPService } from './icp.service.js'
 
-export const createICP = async (req, res) => {
-  try {
-    const { id } = req.user.id
-    const {
-      profession,
-      dreamClient,
-      mainProblem,
-      dreamOutcome,
-      authorityStory,
-    } = req.body
+export const createICP = asyncWrapper(async (req, res) => {
+  const { id } = req.user
+  const {
+    profession,
+    dreamClient,
+    mainProblem,
+    dreamOutcome,
+    authorityStory,
+    clientDemographics,
+    otherDetails,
+  } = req.body
 
-    if (
-      !profession ||
-      !dreamClient ||
-      !mainProblem ||
-      !dreamOutcome ||
-      !authorityStory
-    ) {
-      return res.status(400).json({ message: 'All fields are required' })
-    }
-
-    const newICP = await prisma.ICP.create({
-      data: {
-        profession,
-        dreamClient,
-        mainProblem,
-        dreamOutcome,
-        authorityStory,
-        user: { connect: { id: id } },
-      },
-    })
-
-    res.status(201).json(newICP)
-  } catch (error) {
-    console.error('Error creating ICP:', error)
-    res.status(500).json({ message: 'Internal server error' })
+  if (
+    !profession ||
+    !dreamClient ||
+    !mainProblem ||
+    !dreamOutcome ||
+    !authorityStory ||
+    !clientDemographics
+  ) {
+    return res.status(400).json({ message: 'Missing required fields' })
   }
-}
+
+  const newICP = await createICPService(id, {
+    profession,
+    dreamClient,
+    mainProblem,
+    dreamOutcome,
+    authorityStory,
+    clientDemographics,
+    otherDetails,
+  })
+
+  res.status(201).json(newICP)
+})
 
 export const editICP = async (req, res) => {
   try {
