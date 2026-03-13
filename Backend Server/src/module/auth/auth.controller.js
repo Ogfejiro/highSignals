@@ -54,18 +54,18 @@ export const googleLogin = asyncHandler(async (req, res) => {
 //   }
 // }
 
-// export const logout = async (req, res) => {
-//   try {
-//     const refreshToken = req.cookies.refreshToken
-//     if (!refreshToken)
-//       return res.status(400).json({ error: 'Refresh token missing' })
-//     await prisma.user.update({
-//       where: { refreshToken },
-//       data: { refreshToken: null },
-//     })
-//     res.clearCookie('refreshToken')
-//     return res.status(200).json({ message: 'Logout successful' })
-//   } catch (error) {
-//     res.status(500).json({ error: error.message })
-//   }
-// }
+export const logout = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken
+    if (!refreshToken)
+      return res.status(400).json({ error: 'Refresh token missing' })
+    await prisma.user.update({
+      where: { refreshToken },
+      data: { refreshToken: null },
+    })
+    res.clearCookie('refreshToken')
+    return res.status(200).json({ message: 'Logout successful' })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
