@@ -5,31 +5,42 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+type PublishOption = 'immediate' | 'schedule' | 'draft';
 
 export default function CreatePostScreen() {
   const router = useRouter();
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
+  const [platform, setPlatform] = useState('LinkedIn');
   const [aiScore, setAiScore] = useState<number | null>(null);
   const [aiFeedback, setAiFeedback] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
-  // Text formatting state
+  // Publishing options
+  const [publishOption, setPublishOption] = useState<PublishOption>('immediate');
+  const [scheduleDate, setScheduleDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  
+  // Text formatting
   const [fontSize, setFontSize] = useState(16);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
+
+  const platforms = ['LinkedIn', 'Twitter', 'Instagram', 'Facebook', 'Blog'];
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
     
     // TODO: Call AI API
-    // Simulate AI analysis
     setTimeout(() => {
       setAiScore(92);
       setAiFeedback([
@@ -41,15 +52,17 @@ export default function CreatePostScreen() {
     }, 2000);
   };
 
-  const handleSaveDraft = () => {
-    console.log('Saving draft:', { title, content });
-    // TODO: Save to backend
-  };
-
   const handlePublish = () => {
-    console.log('Publishing:', { title, content, score: aiScore });
-    // TODO: Mark as published in backend
-    router.back();
+    if (publishOption === 'immediate') {
+      console.log('Publishing immediately:', { title, content, platform });
+      router.back();
+    } else if (publishOption === 'schedule') {
+      console.log('Scheduling for:', scheduleDate, { title, content, platform });
+      router.back();
+    } else {
+      console.log('Saving as draft:', { title, content, platform });
+      router.back();
+    }
   };
 
   const increaseFontSize = () => {
@@ -65,25 +78,41 @@ export default function CreatePostScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#0a192f" />
-
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.closeButton}>✕</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Content</Text>
-        <TouchableOpacity onPress={handleSaveDraft}>
+        <TouchableOpacity onPress={() => console.log('Save draft')}>
           <Text style={styles.saveButton}>Save</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Title Input */}
+        {/* Platform Selector */}
+        <View style={styles.platformSection}>
+          <Text style={styles.sectionLabel}>Platform</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {platforms.map((p) => (
+              <TouchableOpacity
+                key={p}
+                style={[styles.platformChip, platform === p && styles.platformChipActive]}
+                onPress={() => setPlatform(p)}
+              >
+                <Text style={[styles.platformText, platform === p && styles.platformTextActive]}>
+                  {p}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Title */}
         <View style={styles.titleSection}>
           <TextInput
             style={styles.titleInput}
-            placeholder="Give your content a title..."
+            placeholder="Title (optional)"
             placeholderTextColor="rgba(255,255,255,0.4)"
             value={title}
             onChangeText={setTitle}
@@ -93,7 +122,6 @@ export default function CreatePostScreen() {
         {/* Formatting Toolbar */}
         <View style={styles.toolbar}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {/* Font Size Controls */}
             <View style={styles.toolbarGroup}>
               <TouchableOpacity style={styles.toolButton} onPress={decreaseFontSize}>
                 <Text style={styles.toolIcon}>A-</Text>
@@ -104,7 +132,6 @@ export default function CreatePostScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Bold */}
             <TouchableOpacity 
               style={[styles.toolButton, isBold && styles.toolButtonActive]}
               onPress={() => setIsBold(!isBold)}
@@ -112,17 +139,11 @@ export default function CreatePostScreen() {
               <Text style={[styles.toolIcon, { fontWeight: 'bold' }]}>B</Text>
             </TouchableOpacity>
 
-            {/* Italic */}
             <TouchableOpacity 
               style={[styles.toolButton, isItalic && styles.toolButtonActive]}
               onPress={() => setIsItalic(!isItalic)}
             >
               <Text style={[styles.toolIcon, { fontStyle: 'italic' }]}>I</Text>
-            </TouchableOpacity>
-
-            {/* More formatting options */}
-            <TouchableOpacity style={styles.toolButton}>
-              <Text style={styles.toolIcon}>⋮</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -138,7 +159,7 @@ export default function CreatePostScreen() {
                 fontStyle: isItalic ? 'italic' : 'normal',
               }
             ]}
-            placeholder="Start writing your content here..."
+            placeholder="Write your content here..."
             placeholderTextColor="rgba(255,255,255,0.3)"
             value={content}
             onChangeText={setContent}
@@ -154,10 +175,9 @@ export default function CreatePostScreen() {
           </Text>
         </View>
 
-        {/* AI Analysis Section */}
+        {/* AI Score */}
         {aiScore !== null && (
           <View style={styles.aiResultCard}>
-            {/* Score Display */}
             <View style={styles.scoreSection}>
               <View style={styles.scoreCircleLarge}>
                 <Text style={styles.scoreLabel}>AI SCORE</Text>
@@ -166,7 +186,6 @@ export default function CreatePostScreen() {
               </View>
             </View>
 
-            {/* Feedback */}
             <View style={styles.feedbackSection}>
               <Text style={styles.feedbackTitle}>💡 AI Suggestions</Text>
               {aiFeedback.map((feedback, index) => (
@@ -179,7 +198,7 @@ export default function CreatePostScreen() {
           </View>
         )}
 
-        <View style={{ height: 120 }} />
+        <View style={{ height: 180 }} />
       </ScrollView>
 
       {/* Bottom Action Bar */}
@@ -195,16 +214,112 @@ export default function CreatePostScreen() {
             </Text>
           </TouchableOpacity>
         ) : (
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.saveDraftButton} onPress={handleSaveDraft}>
-              <Text style={styles.saveDraftText}>Save Draft</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.publishButton} onPress={handlePublish}>
-              <Text style={styles.publishButtonText}>Mark as Published</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            style={styles.publishOptionsButton}
+            onPress={() => setShowPublishModal(true)}
+          >
+            <Text style={styles.publishOptionsText}>Choose Publish Option →</Text>
+          </TouchableOpacity>
         )}
       </View>
+
+      {/* Publish Options Modal */}
+      <Modal
+        visible={showPublishModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPublishModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Publish Options</Text>
+
+            {/* Immediate */}
+            <TouchableOpacity
+              style={[styles.option, publishOption === 'immediate' && styles.optionSelected]}
+              onPress={() => setPublishOption('immediate')}
+            >
+              <View style={styles.optionLeft}>
+                <Text style={styles.optionIcon}>⚡</Text>
+                <View>
+                  <Text style={styles.optionTitle}>Publish Immediately</Text>
+                  <Text style={styles.optionDesc}>Post will go live right now</Text>
+                </View>
+              </View>
+              {publishOption === 'immediate' && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+
+            {/* Schedule */}
+            <TouchableOpacity
+              style={[styles.option, publishOption === 'schedule' && styles.optionSelected]}
+              onPress={() => {
+                setPublishOption('schedule');
+                setShowDatePicker(true);
+              }}
+            >
+              <View style={styles.optionLeft}>
+                <Text style={styles.optionIcon}>📅</Text>
+                <View>
+                  <Text style={styles.optionTitle}>Schedule for Later</Text>
+                  <Text style={styles.optionDesc}>
+                    {publishOption === 'schedule' 
+                      ? scheduleDate.toLocaleString()
+                      : 'Choose date and time'}
+                  </Text>
+                </View>
+              </View>
+              {publishOption === 'schedule' && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+
+            {/* Draft */}
+            <TouchableOpacity
+              style={[styles.option, publishOption === 'draft' && styles.optionSelected]}
+              onPress={() => setPublishOption('draft')}
+            >
+              <View style={styles.optionLeft}>
+                <Text style={styles.optionIcon}>📝</Text>
+                <View>
+                  <Text style={styles.optionTitle}>Save as Draft</Text>
+                  <Text style={styles.optionDesc}>Come back to it later</Text>
+                </View>
+              </View>
+              {publishOption === 'draft' && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+
+            {/* Action Buttons */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowPublishModal(false)}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={() => {
+                  setShowPublishModal(false);
+                  handlePublish();
+                }}
+              >
+                <Text style={styles.confirmText}>Confirm</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={scheduleDate}
+          mode="datetime"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (selectedDate) setScheduleDate(selectedDate);
+          }}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -212,10 +327,8 @@ export default function CreatePostScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a192f', // Brand blue
+    backgroundColor: '#0a192f',
   },
-
-  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -239,17 +352,51 @@ const styles = StyleSheet.create({
   saveButton: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#d4af37', // Brand gold
+    color: '#d4af37',
   },
 
-  // Title Section
+  // Platform
+  platformSection: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.6)',
+    marginBottom: 12,
+    letterSpacing: 1,
+  },
+  platformChip: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  platformChipActive: {
+    backgroundColor: '#d4af37',
+    borderColor: '#d4af37',
+  },
+  platformText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  platformTextActive: {
+    color: '#0a192f',
+  },
+
+  // Title
   titleSection: {
     paddingHorizontal: 24,
     paddingTop: 20,
   },
   titleInput: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#ffffff',
     paddingVertical: 12,
   },
@@ -276,7 +423,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   toolButtonActive: {
-    backgroundColor: '#d4af37', // Brand gold
+    backgroundColor: '#d4af37',
   },
   toolIcon: {
     fontSize: 16,
@@ -339,19 +486,15 @@ const styles = StyleSheet.create({
   scoreLarge: {
     fontSize: 64,
     fontWeight: '800',
-    color: '#0a192f', // Brand blue
+    color: '#0a192f',
     lineHeight: 72,
   },
   scoreOutOf: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#d4af37', // Brand gold
+    color: '#d4af37',
   },
-
-  // Feedback
-  feedbackSection: {
-    // Feedback list
-  },
+  feedbackSection: {},
   feedbackTitle: {
     fontSize: 16,
     fontWeight: '800',
@@ -389,7 +532,7 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255,255,255,0.1)',
   },
   analyzeButton: {
-    backgroundColor: '#d4af37', // Brand gold
+    backgroundColor: '#d4af37',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -402,34 +545,103 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     backgroundColor: 'rgba(212,175,55,0.3)',
   },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  saveDraftButton: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  saveDraftText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  publishButton: {
-    flex: 1,
-    backgroundColor: '#d4af37', // Brand gold
+  publishOptionsButton: {
+    backgroundColor: '#d4af37',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
-  publishButtonText: {
+  publishOptionsText: {
     color: '#0a192f',
     fontSize: 16,
     fontWeight: '700',
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0a192f',
+    marginBottom: 24,
+  },
+  option: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#F8F8F8',
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  optionSelected: {
+    borderColor: '#d4af37',
+    backgroundColor: 'rgba(212,175,55,0.1)',
+  },
+  optionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  optionIcon: {
+    fontSize: 24,
+    marginRight: 16,
+  },
+  optionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0a192f',
+    marginBottom: 4,
+  },
+  optionDesc: {
+    fontSize: 13,
+    color: '#666',
+  },
+  checkmark: {
+    fontSize: 20,
+    color: '#d4af37',
+    fontWeight: '800',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+  },
+  cancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+  },
+  confirmButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#d4af37',
+  },
+  confirmText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0a192f',
   },
 });

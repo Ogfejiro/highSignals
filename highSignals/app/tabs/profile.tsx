@@ -4,62 +4,66 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
   ScrollView,
   TextInput,
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   
-  // Mock user data - will be from backend
   const [userData, setUserData] = useState({
     name: 'Samuel Adebayo',
     profession: 'Content Creator',
     bio: 'Helping entrepreneurs build their personal brands through consistent content',
     email: 'samuel@highsignals.com',
-    profileImage: null, // Will be image URI
+    profileImage: null as string | null,
   });
 
   const handleSave = () => {
-    // TODO: Save to backend
     setIsEditing(false);
     console.log('Saving profile:', userData);
+    // TODO: Save to backend
   };
 
-  const handleImagePick = () => {
-    // TODO: Implement image picker
-    console.log('Pick image');
+  const handleImagePick = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setUserData({...userData, profileImage: result.assets[0].uri});
+    }
   };
 
   const handleLogout = () => {
-    // TODO: Clear auth and navigate to login
     router.replace('/');
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0a192f" />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backArrow}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity onPress={() => isEditing ? handleSave() : setIsEditing(true)}>
-          <Text style={styles.editButton}>{isEditing ? 'Save' : 'Edit'}</Text>
-        </TouchableOpacity>
-      </View>
-
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Profile Image Section */}
-        <View style={styles.imageSection}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Profile</Text>
+          <TouchableOpacity onPress={() => isEditing ? handleSave() : setIsEditing(true)}>
+            <Text style={styles.editButton}>{isEditing ? 'Save' : 'Edit'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Profile Header with Image Next to Name */}
+        <View style={styles.profileHeader}>
           <TouchableOpacity 
-            style={styles.imageContainer}
+            style={styles.imageWrapper}
             onPress={handleImagePick}
             disabled={!isEditing}
           >
@@ -71,75 +75,49 @@ export default function ProfileScreen() {
               </View>
             )}
             {isEditing && (
-              <View style={styles.cameraOverlay}>
-                <Text style={styles.cameraIcon}>📷</Text>
+              <View style={styles.cameraIcon}>
+                <Text style={styles.cameraEmoji}>📷</Text>
               </View>
             )}
           </TouchableOpacity>
-          {isEditing && (
-            <Text style={styles.imageHint}>Tap to change photo</Text>
-          )}
-        </View>
 
-        {/* Profile Info Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Personal Information</Text>
-
-          {/* Name */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name</Text>
+          <View style={styles.nameContainer}>
             {isEditing ? (
               <TextInput
-                style={styles.input}
+                style={styles.nameInput}
                 value={userData.name}
                 onChangeText={(text) => setUserData({...userData, name: text})}
-                placeholder="Enter your name"
-                placeholderTextColor="#999"
               />
             ) : (
-              <Text style={styles.value}>{userData.name}</Text>
+              <Text style={styles.name}>{userData.name}</Text>
             )}
-          </View>
-
-          {/* Profession */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Profession / Role</Text>
             {isEditing ? (
               <TextInput
-                style={styles.input}
+                style={styles.professionInput}
                 value={userData.profession}
                 onChangeText={(text) => setUserData({...userData, profession: text})}
-                placeholder="e.g., Content Creator, Coach"
-                placeholderTextColor="#999"
               />
             ) : (
-              <Text style={styles.value}>{userData.profession}</Text>
+              <Text style={styles.profession}>{userData.profession}</Text>
             )}
           </View>
+        </View>
 
-          {/* Bio */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Bio</Text>
-            {isEditing ? (
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={userData.bio}
-                onChangeText={(text) => setUserData({...userData, bio: text})}
-                placeholder="Tell us about yourself"
-                placeholderTextColor="#999"
-                multiline
-                numberOfLines={3}
-              />
-            ) : (
-              <Text style={styles.value}>{userData.bio}</Text>
-            )}
-          </View>
-
-          {/* Email (read-only) */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <Text style={styles.value}>{userData.email}</Text>
-          </View>
+        {/* Bio Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Bio</Text>
+          {isEditing ? (
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={userData.bio}
+              onChangeText={(text) => setUserData({...userData, bio: text})}
+              multiline
+              numberOfLines={3}
+              placeholderTextColor="#999"
+            />
+          ) : (
+            <Text style={styles.bioText}>{userData.bio}</Text>
+          )}
         </View>
 
         {/* Stats Card */}
@@ -163,9 +141,9 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Settings & Actions */}
+        {/* Settings */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Settings & Preferences</Text>
+          <Text style={styles.cardTitle}>Settings</Text>
 
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuLeft}>
@@ -200,15 +178,13 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Logout Button */}
+        {/* Logout */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
 
-        {/* App Version */}
         <Text style={styles.versionText}>HighSignals v1.0.0</Text>
-
-        <View style={{ height: 40 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
     </View>
   );
@@ -217,10 +193,8 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a192f', // Brand blue
+    backgroundColor: '#0a192f',
   },
-
-  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -242,55 +216,86 @@ const styles = StyleSheet.create({
   editButton: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#d4af37', // Brand gold
+    color: '#d4af37',
   },
 
-  // Profile Image
-  imageSection: {
+  // Profile Header with Image + Name Side by Side
+  profileHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 24,
+    paddingHorizontal: 24,
+    marginBottom: 24,
   },
-  imageContainer: {
+  imageWrapper: {
     position: 'relative',
-    marginBottom: 8,
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   placeholderImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#d4af37', // Brand gold
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#d4af37',
     justifyContent: 'center',
     alignItems: 'center',
   },
   placeholderInitial: {
-    fontSize: 48,
+    fontSize: 32,
     fontWeight: '800',
-    color: '#0a192f', // Brand blue
+    color: '#0a192f',
   },
-  cameraOverlay: {
+  cameraIcon: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#d4af37',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#0a192f',
   },
-  cameraIcon: {
-    fontSize: 20,
+  cameraEmoji: {
+    fontSize: 14,
   },
-  imageHint: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.6)',
+  nameContainer: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  profession: {
+    fontSize: 14,
+    color: '#d4af37',
+    fontWeight: '600',
+  },
+  nameInput: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#ffffff',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  professionInput: {
+    fontSize: 14,
+    color: '#d4af37',
+    fontWeight: '600',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
 
   // Cards
@@ -304,19 +309,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0a192f', // Brand blue
-    marginBottom: 20,
+    color: '#0a192f',
+    marginBottom: 16,
   },
-
-  // Input Fields
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
+  bioText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 22,
   },
   input: {
     backgroundColor: '#F8F8F8',
@@ -333,11 +332,6 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     textAlignVertical: 'top',
   },
-  value: {
-    fontSize: 15,
-    color: '#333',
-    paddingVertical: 12,
-  },
 
   // Stats
   statsRow: {
@@ -351,7 +345,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#0a192f', // Brand blue
+    color: '#0a192f',
     marginBottom: 4,
   },
   statLabel: {
@@ -365,7 +359,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8E8E8',
   },
 
-  // Menu Items
+  // Menu
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -392,7 +386,7 @@ const styles = StyleSheet.create({
     color: '#999',
   },
 
-  // Logout Button
+  // Logout
   logoutButton: {
     marginHorizontal: 24,
     backgroundColor: 'rgba(255,59,48,0.1)',
@@ -408,8 +402,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FF3B30',
   },
-
-  // Version
   versionText: {
     fontSize: 12,
     color: 'rgba(255,255,255,0.4)',

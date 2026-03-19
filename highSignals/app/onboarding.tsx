@@ -9,7 +9,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -118,9 +117,8 @@ export default function OnboardingScreen() {
     // TODO: Send to backend API
     // await saveICPProfile(finalAnswers);
     
-    // Navigate to home/dashboard
-    // router.push('/home');
-    alert('Onboarding Complete! 🎉');
+    // Navigate to tabs dashboard (UPDATED)
+    router.replace('/dashboard');
   };
 
   const canProceed = currentAnswer.trim().length > 0 || !currentQuestion.required;
