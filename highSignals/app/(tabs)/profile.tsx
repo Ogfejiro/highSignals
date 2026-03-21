@@ -1,50 +1,98 @@
-import React, { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker'
+import { useRouter } from 'expo-router'
+import React, { useState } from 'react'
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  TextInput,
+  Alert,
   Image,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native'
+
+interface BackendUserData {
+  name: string
+  profession?: string
+  email: string
+  avatar?: string
+  bio?: string
+  twitterId?: string
+  facebookId?: string
+  linkedInId?: string
+  tiktokId?: string
+  instagramId?: string
+}
 
 export default function ProfileScreen() {
-  const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
-  
-  const [userData, setUserData] = useState({
+  const router = useRouter()
+  const [isEditing, setIsEditing] = useState(false)
+
+  const [userData, setUserData] = useState<BackendUserData>({
     name: 'Samuel Adebayo',
     profession: 'Content Creator',
-    bio: 'Helping entrepreneurs build their personal brands through consistent content',
     email: 'samuel@highsignals.com',
-    profileImage: null as string | null,
-  });
+    bio: 'Helping entrepreneurs build their personal brands through consistent content',
+    avatar: undefined,
+    twitterId: '',
+    facebookId: '',
+    linkedInId: '',
+    tiktokId: '',
+    instagramId: '',
+  })
 
-  const handleSave = () => {
-    setIsEditing(false);
-    console.log('Saving profile:', userData);
-    // TODO: Save to backend
-  };
+  const handleSave = async () => {
+    try {
+      // Backend aligned payload
+      const payload = {
+        name: userData.name,
+        profession: userData.profession || null,
+        avatar: userData.avatar || null,
+        bio: userData.bio || null,
+        twitterId: userData.twitterId || null,
+        facebookId: userData.facebookId || null,
+        linkedInId: userData.linkedInId || null,
+        tiktokId: userData.tiktokId || null,
+        instagramId: userData.instagramId || null,
+      }
+
+      console.log('Saving to backend:', payload)
+
+      // TODO: POST /api/profile
+      // await fetch('/api/profile', { method: 'PATCH', body: JSON.stringify(payload) });
+
+      Alert.alert('Success', 'Profile updated!')
+      setIsEditing(false)
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save profile')
+    }
+  }
 
   const handleImagePick = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!permission.granted) {
+      Alert.alert('Permission required', 'Please enable photo library access')
+      return
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
-    });
+    })
 
-    if (!result.canceled) {
-      setUserData({...userData, profileImage: result.assets[0].uri});
+    if (!result.canceled && result.assets && result.assets[0]) {
+      setUserData({ ...userData, avatar: result.assets[0].uri })
     }
-  };
+  }
 
   const handleLogout = () => {
-    router.replace('/');
-  };
+    // TODO: Clear auth tokens
+    console.log('Logging out')
+    router.replace('/')
+  }
 
   return (
     <View style={styles.container}>
@@ -55,23 +103,30 @@ export default function ProfileScreen() {
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
-          <TouchableOpacity onPress={() => isEditing ? handleSave() : setIsEditing(true)}>
+          <TouchableOpacity
+            onPress={() => (isEditing ? handleSave() : setIsEditing(true))}
+          >
             <Text style={styles.editButton}>{isEditing ? 'Save' : 'Edit'}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Profile Header with Image Next to Name */}
+        {/* Profile Header */}
         <View style={styles.profileHeader}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.imageWrapper}
             onPress={handleImagePick}
             disabled={!isEditing}
           >
-            {userData.profileImage ? (
-              <Image source={{ uri: userData.profileImage }} style={styles.profileImage} />
+            {userData.avatar ? (
+              <Image
+                source={{ uri: userData.avatar }}
+                style={styles.profileImage}
+              />
             ) : (
               <View style={styles.placeholderImage}>
-                <Text style={styles.placeholderInitial}>{userData.name[0]}</Text>
+                <Text style={styles.placeholderInitial}>
+                  {userData.name.charAt(0)}
+                </Text>
               </View>
             )}
             {isEditing && (
@@ -81,12 +136,16 @@ export default function ProfileScreen() {
             )}
           </TouchableOpacity>
 
-          <View style={styles.nameContainer}>
+          <View style={styles.infoContainer}>
             {isEditing ? (
               <TextInput
                 style={styles.nameInput}
                 value={userData.name}
-                onChangeText={(text) => setUserData({...userData, name: text})}
+                onChangeText={(text) =>
+                  setUserData({ ...userData, name: text })
+                }
+                placeholder='Enter name'
+                autoCapitalize='words'
               />
             ) : (
               <Text style={styles.name}>{userData.name}</Text>
@@ -94,12 +153,19 @@ export default function ProfileScreen() {
             {isEditing ? (
               <TextInput
                 style={styles.professionInput}
-                value={userData.profession}
-                onChangeText={(text) => setUserData({...userData, profession: text})}
+                value={userData.profession || ''}
+                onChangeText={(text) =>
+                  setUserData({ ...userData, profession: text })
+                }
+                placeholder='Profession'
+                autoCapitalize='words'
               />
             ) : (
-              <Text style={styles.profession}>{userData.profession}</Text>
+              <Text style={styles.profession}>
+                {userData.profession || 'No profession'}
+              </Text>
             )}
+            <Text style={styles.email}>{userData.email}</Text>
           </View>
         </View>
 
@@ -109,18 +175,46 @@ export default function ProfileScreen() {
           {isEditing ? (
             <TextInput
               style={[styles.input, styles.textArea]}
-              value={userData.bio}
-              onChangeText={(text) => setUserData({...userData, bio: text})}
+              value={userData.bio || ''}
+              onChangeText={(text) => setUserData({ ...userData, bio: text })}
               multiline
               numberOfLines={3}
-              placeholderTextColor="#999"
+              placeholder='Tell us about yourself...'
+              placeholderTextColor='#999'
+              maxLength={500}
             />
           ) : (
-            <Text style={styles.bioText}>{userData.bio}</Text>
+            <Text style={styles.bioText}>{userData.bio || 'No bio yet'}</Text>
+          )}
+          {!isEditing && userData.bio && (
+            <Text style={styles.bioLength}>{userData.bio.length} chars</Text>
           )}
         </View>
 
-        {/* Stats Card */}
+        {/* Social Links */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Social Links</Text>
+          {[
+            'twitterId',
+            'facebookId',
+            'linkedInId',
+            'tiktokId',
+            'instagramId',
+          ].map((field) => (
+            <TextInput
+              key={field}
+              style={styles.input}
+              value={(userData[field as keyof BackendUserData] as string) || ''}
+              onChangeText={(text) =>
+                setUserData({ ...userData, [field]: text })
+              }
+              placeholder={field.replace('Id', '')}
+              editable={isEditing}
+            />
+          ))}
+        </View>
+
+        {/* Stats Card (UI only) */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Your Stats</Text>
           <View style={styles.statsRow}>
@@ -187,7 +281,7 @@ export default function ProfileScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -218,8 +312,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#d4af37',
   },
-
-  // Profile Header with Image + Name Side by Side
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -263,7 +355,7 @@ const styles = StyleSheet.create({
   cameraEmoji: {
     fontSize: 14,
   },
-  nameContainer: {
+  infoContainer: {
     marginLeft: 16,
     flex: 1,
   },
@@ -273,10 +365,10 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginBottom: 4,
   },
-  profession: {
+  email: {
     fontSize: 14,
-    color: '#d4af37',
-    fontWeight: '600',
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
   },
   nameInput: {
     fontSize: 24,
@@ -290,15 +382,26 @@ const styles = StyleSheet.create({
   },
   professionInput: {
     fontSize: 14,
+    color: '#ffffff',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  profession: {
+    fontSize: 14,
     color: '#d4af37',
     fontWeight: '600',
+  },
+  emailInput: {
+    fontSize: 14,
+    color: '#ffffff',
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-
-  // Cards
   card: {
     backgroundColor: '#ffffff',
     marginHorizontal: 24,
@@ -332,8 +435,12 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     textAlignVertical: 'top',
   },
-
-  // Stats
+  bioLength: {
+    fontSize: 11,
+    color: '#999',
+    textAlign: 'right',
+    marginTop: 4,
+  },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -358,8 +465,6 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: '#E8E8E8',
   },
-
-  // Menu
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -385,8 +490,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#999',
   },
-
-  // Logout
   logoutButton: {
     marginHorizontal: 24,
     backgroundColor: 'rgba(255,59,48,0.1)',
@@ -408,4 +511,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
   },
-});
+})
