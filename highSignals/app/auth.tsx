@@ -1,20 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'expo-router'
+import React, { useEffect, useRef } from 'react'
 import {
-  View,
+  Animated,
+  StatusBar,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  StatusBar,
-  Animated,
-} from 'react-native';
-import { useRouter } from 'expo-router';
+  View,
+} from 'react-native'
 
 export default function AuthScreen() {
-  const router = useRouter();
+  const router = useRouter()
 
   // Animation
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current
+  const slideAnim = useRef(new Animated.Value(30)).current
 
   useEffect(() => {
     Animated.parallel([
@@ -28,12 +28,12 @@ export default function AuthScreen() {
         duration: 700,
         useNativeDriver: true,
       }),
-    ]).start();
-  }, []);
+    ]).start()
+  }, [])
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0a192f" />
+      <StatusBar barStyle='light-content' backgroundColor='#0a192f' />
 
       <Animated.View
         style={[
@@ -41,7 +41,6 @@ export default function AuthScreen() {
           { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
         ]}
       >
-
         {/* Score Gauge Section */}
         <View style={styles.gaugeSection}>
           <View style={styles.gaugeWrapper}>
@@ -75,13 +74,12 @@ export default function AuthScreen() {
 
         {/* Buttons */}
         <View style={styles.buttonsContainer}>
-
           {/* Continue with Google */}
           <TouchableOpacity
             style={styles.googleButton}
             activeOpacity={0.85}
             onPress={() => {
-              console.log('Google sign in pressed');
+              console.log('Google sign in pressed')
             }}
           >
             <View style={styles.googleIcon}>
@@ -95,13 +93,12 @@ export default function AuthScreen() {
             style={styles.emailButton}
             activeOpacity={0.85}
             onPress={() => {
-              router.push('/Signup login');
+              router.push('/signup-login')
             }}
           >
             <Text style={styles.emailIcon}>✉</Text>
             <Text style={styles.emailButtonText}>Continue with Email</Text>
           </TouchableOpacity>
-
         </View>
 
         {/* Already have account */}
@@ -111,10 +108,9 @@ export default function AuthScreen() {
             <Text style={styles.loginAccent}>Log In</Text>
           </Text>
         </TouchableOpacity>
-
       </Animated.View>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -305,4 +301,4 @@ const styles = StyleSheet.create({
     color: '#d4af37', // Brand gold
     fontWeight: '600',
   },
-});
+})
